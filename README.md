@@ -2,4 +2,4 @@ ahocorasick
 ===========
 
 A Golang implementation of the Aho-Corasick string matching algorithm
-Foreked forked from cloudflare/ahocorasick added matched keywords ends offsets functionality 
+Forked from cloudflare/ahocorasick and customized to incrementall rune by rune loockup
