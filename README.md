@@ -2,4 +2,4 @@ ahocorasick
 ===========
 
 A Golang implementation of the Aho-Corasick string matching algorithm
-Forked from cloudflare/ahocorasick and customized to incrementall rune by rune loockup
+Forked from cloudflare/ahocorasick and customized to return matched paterns and their offsets
