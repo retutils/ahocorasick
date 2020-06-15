@@ -49,13 +49,17 @@ type node struct {
 // Matcher is returned by NewMatcher and contains a list of blices to
 // match against
 type Matcher struct {
-	counter int // Counts the number of matches done, and is used to
+	kewords []string //Keywords
+	counter int      // Counts the number of matches done, and is used to
 	// prevent output of multiple matches of the same string
 	trie []node // preallocated block of memory containing all the
 	// nodes
 	extent int   // offset into trie that is currently free
 	root   *node // Points to trie[0]
 }
+
+//Result of matches with match offset
+type Result map[string]int
 
 // finndBlice looks for a blice in the trie starting from the root and
 // returns a pointer to the node representing the end of the blice. If
@@ -74,7 +78,7 @@ func (m *Matcher) findBlice(b []byte) *node {
 // getFreeNode: gets a free node structure from the Matcher's trie
 // pool and updates the extent to point to the next free node.
 func (m *Matcher) getFreeNode() *node {
-	m.extent += 1
+	m.extent++
 
 	if m.extent == 1 {
 		m.root = &m.trie[0]
@@ -188,21 +192,11 @@ func (m *Matcher) buildTrie(dictionary [][]byte) {
 	m.trie = m.trie[:m.extent]
 }
 
-// NewMatcher creates a new Matcher used to match against a set of
-// blices
-func NewMatcher(dictionary [][]byte) *Matcher {
-	m := new(Matcher)
-
-	m.buildTrie(dictionary)
-
-	return m
-}
-
 // NewStringMatcher creates a new Matcher used to match against a set
 // of strings (this is a helper to make initialization easy)
 func NewStringMatcher(dictionary []string) *Matcher {
 	m := new(Matcher)
-
+	m.kewords = dictionary
 	var d [][]byte
 	for _, s := range dictionary {
 		d = append(d, []byte(s))
@@ -215,13 +209,12 @@ func NewStringMatcher(dictionary []string) *Matcher {
 
 // Match searches in for blices and returns all the blices found as
 // indexes into the original dictionary
-func (m *Matcher) Match(in []byte) []int {
-	m.counter += 1
-	var hits []int
-
+func (m *Matcher) Match(in []byte) (r Result) {
+	m.counter++
+	r = make(Result)
 	n := m.root
 
-	for _, b := range in {
+	for offset, b := range in {
 		c := int(b)
 
 		if !n.root && n.child[c] == nil {
@@ -233,14 +226,14 @@ func (m *Matcher) Match(in []byte) []int {
 			n = f
 
 			if f.output && f.counter != m.counter {
-				hits = append(hits, f.index)
+				r[m.kewords[f.index]] = offset
 				f.counter = m.counter
 			}
 
 			for !f.suffix.root {
 				f = f.suffix
 				if f.counter != m.counter {
-					hits = append(hits, f.index)
+					r[m.kewords[f.index]] = offset
 					f.counter = m.counter
 				} else {
 
@@ -254,5 +247,5 @@ func (m *Matcher) Match(in []byte) []int {
 		}
 	}
 
-	return hits
+	return r
 }
